@@ -3,24 +3,30 @@ server/client utilities passing messages via AMQP and using json-rpc format
 Server
 -----------------------------------------------------
 
+Blix::Server.start(parser,handler,options)
 
- create a server passing the handler object and a hash of options.
-   the handler object gets its 'process'method called with the message
-   and the resulting message is passed back to the response queue
-  
-    handler, object with 'process' method to process requests
-  
+ create a server passing a parser object and  handler object and a hash of options.
+ 
+ parser  : parses data from the server into message objects for a certain protocol. eg
+           json-rpc  or xml
+           
+ handler : a method gets called on this object to perform th RPC
+
+ Options :--
+   
     :host     => 'localhost', the host of the AMQP broker
     :response => 'responses', the response exchange name
     :request  => 'requests'   the request exchange name
     :notify   => 'notify'     the notifications exchange name
-    
+ 
+eg:
+
 require 'blix'
+parser = Blix::Server::JsonRpcParser.new
+handler = MyHandler.new
 
 Blix::VALID_KLASS[:area] = [Area]
-
-Blix::Server.start(handler,:host=>broker)
-
+Blix::Server.start(parser,handler,:host=>"myhost")
 
 
 Client
