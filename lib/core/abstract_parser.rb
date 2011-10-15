@@ -1,6 +1,5 @@
 
 module Blix
-  module Server
     
     class ParseError < StandardError; end
     
@@ -13,7 +12,7 @@ module Blix
     #   format_error(message)             # create rpc data from error message
     #   format_notification(signal,value) # create rpc data from notification
     
-    class Parser
+    class AbstractParser
       
       #---------------------------------------------------------------------------------
       # the following methods must be reimplemented in your subclasses
@@ -24,22 +23,35 @@ module Blix
         raise "please implement parse_request(data) in your subclass "
       end
       
+      # parse a message string and return a RequestMessage object.
+      # reimplement this method 
+      def parse_response(data)
+        raise "please implement parse_response(data) in your subclass "
+      end
+      
+      # parse a message string and return a RequestMessage object.
+      # reimplement this method 
+      def parse_notification(data)
+        raise "please implement parse_notification(data) in your subclass "
+      end
+      
+      # format a response message into data
+      # reimplement this method
+      def format_request(message)
+        raise "please implement format_request(message) in your subclass "
+      end
+      
       # format a response message into data
       # reimplement this method
       def format_response(message)
         raise "please implement format_response(message) in your subclass "
       end
       
+            
       # format an error message into data
       # reimplement this method
-      def format_error(message)
-        raise "please implement format_error(message) in your subclass "
-      end
-      
-      # format an error message into data
-      # reimplement this method
-      def format_notification(signal,value)
-        raise "please implement format_notification(signal,value) in your subclass "
+      def format_notification(message)
+        raise "please implement format_notification(message) in your subclass "
       end
       
       #-------------------------------------------------------------------------------
@@ -130,6 +142,5 @@ module Blix
 #      end
       
     end #Parser
-    
-  end #Server
+
 end #Blix

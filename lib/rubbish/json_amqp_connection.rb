@@ -15,14 +15,31 @@
 require 'rubygems'
 require 'crack'
 require 'bunny'
-require 'core/get_xml'
+#require '../core/json_basics'
 require 'monitor'
 require 'observer'
-require 'client/rationalize'
-require 'core/signals'
-require 'core/valid_class'
-require 'core/conversions'
+#require 'rationalize'
+#require 'core/signals'
+#require 'core/valid_class'
+#require 'core/conversions'
 module Blix
+  
+  def self.to_binary_data(data)
+    if RUBY_VERSION >= "1.9"
+      data.force_encoding("ascii-8bit")
+    else
+      data
+    end
+  end
+  
+  def self.from_binary_data(data)
+    if (RUBY_VERSION >= "1.9") && (data.class == String)
+      data.force_encoding("utf-8")
+    else
+      data
+    end
+  end
+  
   
   
   module Client
@@ -238,7 +255,7 @@ module Blix
       end
       
       #-----------------------------------------------------------------------------------
-      protected
+      #protected
       
       # inform oberservers of the signal
       def notify(signal,*args)
@@ -307,7 +324,7 @@ module Blix
           payload = msg[:payload]
           incoming = payload unless payload == :queue_empty
         end
-
+        
         #        
         if $DEBUG
           puts "[request]response json-----"

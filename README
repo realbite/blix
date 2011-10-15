@@ -3,7 +3,8 @@ server/client utilities passing messages via AMQP and using json-rpc format
 Server
 -----------------------------------------------------
 
-Blix::Server.start(parser,handler,options)
+Blix::Server.create(parser,handler,options)
+Blix::Server.start
 
  create a server passing a parser object and  handler object and a hash of options.
  
@@ -21,19 +22,35 @@ Blix::Server.start(parser,handler,options)
  
 eg:
 
-require 'blix'
-parser = Blix::Server::JsonRpcParser.new
-handler = MyHandler.new
+class MyHandler < Blix::Server::Handler
+   def foo(value,size)
+      # do your application stuff here
+   end
+end
 
-Blix::VALID_KLASS[:area] = [Area]
-Blix::Server.start(parser,handler,:host=>"myhost")
+Blix::ServerMethod.new(:foo,:value,:size)       # register the method and parameter names here
+
+require 'blix'
+parser = Blix::JsonRpcParser.new
+parser.valid_klass[:area] = [Server::Area]      # register your application classes => name mappings here
+
+handler = MyHandler.new
+handler.extend Blix::Server::CrudHandlerMethods
+handler.extend Blix::Server::EchoHandlerMethods
+
+Blix::Server.create(parser,handler,:host=>"myhost")
+Blix::Server.start
+
+
 
 
 Client
 -----------------------------------------------------
-Blix::VALID_KLASS[:area] = [Area]
+require 'blix'
+parser = Blix::JsonRpcParser.new
+parser.valid_klass[:area] = [Client::Area]
 
-client    = Blix::Client::Connection.create(:host=>"myhost")
+client    = Blix::Client::AmqpConnection.create(parser,:host=>"myhost")
 
 client.area_all
 

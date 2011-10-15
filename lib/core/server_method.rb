@@ -11,15 +11,70 @@ module Blix
     
     attr_reader :parameters
     
+    CRUD_METHODS = [:all, :get, :create, :update, :delete]
+    
     def ServerMethod.list
       @list ||= {}
     end
     
+    def ServerMethod.clear
+      @list = {}
+    end
+    
+    # check to see if this method has been registered. If the name is a crud method then
+    # check to see if this has been registered.
     def ServerMethod.find(name)
       id = name.to_sym
       item = list[id]
-      raise ArgumentError, "method:#{name} not defined as ServerMethod" unless item
-      item
+      if item
+        item.parameters
+        # check for crud format
+      else
+        method_name = name.to_s
+        parts =  method_name.split('_')
+        action = nil
+        klass = nil
+        if (parts.length > 1)
+          action =  parts.last.to_sym
+          klass =  parts[0..-2].join('_').downcase.to_sym
+        end
+        is_crud    = klass && action && CRUD_METHODS.index(action)
+        if is_crud
+          item = list["%_#{klass}".to_sym]
+          if item && item.parameters.index(action)
+            case action
+              when :all
+                []
+              when :get
+                [:id]
+              when :create
+                [:item]
+              when :update
+                [:item]
+              when :delete
+                [:id]
+              else
+                []
+            end
+          else
+            raise ArgumentError, "method:#{name} not defined as ServerMethod"
+          end
+        else
+          raise ArgumentError, "method:#{name} not defined as ServerMethod"
+        end
+      end
+    end
+    
+    # register a resource to allow certain crud methods.
+    def self.crud(resource,*args)
+      id = "%_#{resource}".to_sym
+      list = []
+      raise ArgumentError, "missing CRUD method(s) " unless args.length > 0
+      args.each do |a|
+        raise ArgumentError,"invalid CRUD method" unless CRUD_METHODS.index(a.to_sym)
+        list << a.to_sym
+      end
+      new(id,*list)
     end
     
     def initialize(method,*args)
@@ -29,21 +84,21 @@ module Blix
     end
     
     def ServerMethod.as_hash(name,*args)
-      item = find(name)
-      if args.length > item.parameters.length
+      parameters = find(name)
+      if args.length > parameters.length
         raise ArgumentError, "too many arguments for method:#{name}#{item} - #{args.length} for #{item.parameters.length}"
       end
       hash = {}
       args.each_with_index do |p,i|
-        hash[item.parameters[i]] = p
+        hash[parameters[i]] = p
       end
       hash
     end
     
     def ServerMethod.as_args(name,hash={})
-      item = find(name)
+      parameters = find(name)
       args = []
-      item.parameters.each_with_index do |id,i|
+      parameters.each_with_index do |id,i|
         args[i] = hash[id] if  hash[id]
       end
       args

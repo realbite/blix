@@ -4,7 +4,7 @@ require 'rake'
 Gem::Specification.new do |spec|
 
 spec.name = 'blix'
-spec.version = '0.2.1'
+spec.version = '0.2.2'
 spec.author  = "Clive Andrews"
 spec.email   = "pacman@realitybites.nl"
 

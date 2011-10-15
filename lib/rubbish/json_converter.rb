@@ -1,7 +1,6 @@
 require 'bigdecimal'
 
 module Blix
-  module Conversion
     class JsonConverter
       
       def initialize(klasses=nil)
@@ -100,7 +99,7 @@ module Blix
       
       # convert plural class names to singular... if there are class names that end in 's'
       # then we will have to code in an exception for this class.
-      def self.singular(txt)
+      def singular(txt)
         parts =  txt.split('_')
         
         if (parts.length>1) && (parts[-1]=="array")
@@ -111,10 +110,9 @@ module Blix
         txt
       end
       
-      def self.array?(txt)
+      def array?(txt)
        (parts.length>1) && (parts[-1]=="array")
       end
-    end
   end
 end
 

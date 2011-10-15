@@ -8,7 +8,7 @@ module Blix::Server
       it "should start running with default handler" do
         lambda{
           Thread.new do
-            parser = JsonRpcParser.new
+            parser = Blix::JsonRpcParser.new
             handler = Handler.new
             AmqpServer.start(parser,handler,:host=>$EXCHANGE_HOST)
           end
@@ -19,7 +19,7 @@ module Blix::Server
     describe "simple client calls" do
       before(:all) do
         @thread = Thread.new do
-          parser = JsonRpcParser.new
+          parser = Blix::JsonRpcParser.new
           handler = EchoHandler.new
           AmqpServer.start(parser,handler,:host=>$EXCHANGE_HOST)
         end

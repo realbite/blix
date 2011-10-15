@@ -34,7 +34,7 @@ require 'core/signals'
 
 module Blix
   module Server
-    class AmqpServer < GeneralServer
+    class AmqpServer < AbstractServer
       
       # create a server passing the handler object and a hash of options.
       # the handler object gets its 'process'method called with the message
@@ -48,17 +48,18 @@ module Blix
       #  :notify   => 'notify'     the notifications exchange name
       
       
-      def listen(opts)
+      def setup(opts)
         @_prefix    = opts[:prefix]   || 'std'
         @host       = opts[:host]     || 'localhost'
         @x_response = opts[:response] || (@_prefix + '.responses')
         @x_request  = opts[:request]  || (@_prefix + '.requests')
         @x_notify   = opts[:notify]   || (@_prefix + '.notify')
         @server_q   = "server.#{@_prefix}.requests"
-        
-        # enter a loop just listening for requests and passing them on to the
-        # handler and returning the response if there is one.
-        
+      end
+      
+      # enter a loop just listening for requests and passing them on to the
+      # handler and returning the response if there is one.
+      def listen
         AMQP.start(:host => @host) do
           exchange = MQ.direct(@x_request)
           reply    = MQ.direct(@x_response)
@@ -106,6 +107,7 @@ module Blix
       # send a raw message to the notification exchange
       def send_notification(msg)
         raise "please start server first before notify !!" unless @x_notify
+        puts "[AmqpServer] notify: message=#{msg}" if $DEBUG
         MQ.fanout(@x_notify).publish(Blix.to_binary_data(msg))
       end
       
