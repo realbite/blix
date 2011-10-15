@@ -59,6 +59,7 @@ module Blix
         @handler = handler
         @handler.set_server(self)
         @handler.set_parser(@parser)
+        @info    = opts[:info]
         setup(opts)
       end
       
@@ -69,6 +70,7 @@ module Blix
       def handler
         @handler
       end
+      
       
       # send a notification
       def notify(signal,value)
@@ -100,8 +102,8 @@ module Blix
           return  parser.format_response(error)
         end
         
-        response = ResponseMessage.new
-        
+        response   = ResponseMessage.new
+        start_time = Time.now
         # handle message with custom handler if available
         if handler.respond_to?( request.method.to_sym )
           begin
@@ -121,6 +123,9 @@ module Blix
           end
           response.method = request.method
           response.id     = request.id
+          
+          time_diff = Time.now - start_time
+          puts "#{Time.now}  #{"%6.3f" % (time_diff*1000)} ms  [ #{request.method} ]" if @info
           parser.format_response(response)
         else
           error             = ResponseMessage.new

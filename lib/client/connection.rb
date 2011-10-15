@@ -77,6 +77,17 @@ module Blix
         request_message(request)
       end
       
+      # try to pass missing methods on as a request if possible
+      def method_missing(name,*args)
+        begin
+          hash = Blix::ServerMethod.as_hash(name, *args)
+          request(name,hash)
+        rescue ArgumentError
+          super
+        end
+      end
+      
+      
       # handle notification data that has been received
       def do_handle(data)
         notification = nil
