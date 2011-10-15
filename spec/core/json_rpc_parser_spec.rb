@@ -1,11 +1,24 @@
 require 'spec_helper'
 
+
+class TestStorage
+  attr_accessor :one, :two, :three, :id
+  make_json :one, :two, :id
+end
+
+class TestNotStorage
+  attr_accessor :one, :two, :three
+  make_json :one, :two
+end
+
 module Blix
   
   describe JsonRpcParser do
     
     before (:all) do
       @parser = JsonRpcParser.new
+      @parser.valid_klass[:test_storage] = [TestStorage]
+      @parser.valid_klass[:test_not_storage] = [TestNotStorage]
     end
     
     describe "requests" do
@@ -135,6 +148,27 @@ module Blix
         message2.should_not be_error
         data2    = @parser.format_response(message2)
         data2.should == data1
+      end
+    end
+    
+    
+    
+    describe "convert simple classes to json" do
+      
+      
+      it "should convert a storage class" do
+        o = TestStorage.new
+        o.one = 111
+        o.two = nil
+        o.three = 333
+        o.id = 999
+        json = {:item=>o}.to_blix_json
+        ck = Crack::JSON.parse json
+        ck.should == {"item"=>{"test_storage"=>{"two"=>nil, "id"=>999, "one"=>111}}}
+        item=@parser.convert_to_class(ck["item"])
+        puts item.inspect
+        json2 = {:item=>item}.to_blix_json
+        json2.should == json
       end
     end
     

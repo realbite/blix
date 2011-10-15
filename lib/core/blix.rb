@@ -15,5 +15,9 @@ module Blix
     end
   end
   
+  # convert a class name to lowercase format
+  def self.dasherize(str)
+    str.gsub(/([a-z])([A-Z])/, '\1_\2' ).downcase.split('::')[-1]
+  end
   
 end #Blix

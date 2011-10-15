@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'core/blix'
 require 'core/valid_klass'
-require 'core/json_basics'
+require 'core/make_json'
 #require 'core/get_xml'
 require 'core/server_method'
 require 'core/dump'
