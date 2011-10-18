@@ -55,3 +55,60 @@ client    = Blix::Client::AmqpConnection.create(parser,:host=>"myhost")
 client.area_all
 
 client.add_observer(self)
+
+
+
+Mirroring Objects
+----------------------------------------------------
+
+The server can mirror objects from the server using the following simple strategy.
+
+1.Description
+-------------
+Every persistent object has a unique identifier within its class that is accessable by the method id.
+This is also used for the ruby object_id so we have to be careful here.
+
+On the client objects never store a direct reference to any other persistent objects but only ever
+store the identifier for that object. When we are looking to access the referred to object we have to 
+look the id up in a memory table. If the object is not present in the memory table then we have to 
+fetch the object from the server and save it.
+
+The client must be notified of all changes to objects so that it can either refresh or delete the 
+information stored in the memory table for that object.
+
+The client can not afford to miss any notifications from the server otherwise its objects will become
+out of sync with the server and we will have to reload everything from scratch.
+
+a single references to an object is  stored in a variable ending in _id
+an list (array) of references to objects is stored in a variable ending in ids.
+the first part of the variable names above is the class name of the referred to variable.
+
+2.Implementation
+----------------
+
+specify a persistant class with: rationalize_attr :id
+eg:
+
+class Foo
+     attr_accessor :id, :name, :alias  ,:foo
+     rationalize_attr :id
+end
+
+whenever we receive an object from the server and we have to integrate it with our memory table
+then perform the following
+
+if obj.respond_to? blix_rationalize
+   new_obj = obj.blix_rationalize
+else
+   new_obj = obj
+end
+
+the obj is either replaced by the modified object from the memory table or we use the
+original object.
+
+we can look up classes in the memory table with Foo[id]
+
+we can find an id with Foo.find(id). This will look in the memory table and if the id is not
+there query the connection for the object using the rpc method foo_get(:id=>id)
+
+

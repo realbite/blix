@@ -78,5 +78,16 @@ module Blix
       lambda{ServerMethod.find(:guest_xxxx)}.should raise_error
       lambda{ServerMethod.find(:user_create)}.should raise_error
     end
+    
+    it "should return correct parameters for crud resources" do
+      ServerMethod.crud(:guest, :delete, :create, :update)
+      ServerMethod.find(:guest_delete).should == [:id]
+      ServerMethod.find(:guest_create).should == [:item]
+      ServerMethod.find(:guest_update).should == [:item]  
+      ServerMethod.crud(:foo, :create, :get, :all).parameters << :key
+      ServerMethod.find(:foo_create).should == [:key, :item]
+      ServerMethod.find(:foo_get).should == [:key, :id]
+      ServerMethod.find(:foo_all).should == [:key]  
+    end
   end
 end

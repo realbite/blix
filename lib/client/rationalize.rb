@@ -27,10 +27,10 @@ class Module
     
     
     class << self
-      alias_method         :old_new , :new
+      #alias_method         :old_new , :new
       include RationalizeClassMethods
     end
-    private_class_method :old_new
+    #private_class_method :old_new
     module_eval (str)
     include RationalizeMethods
   end
@@ -58,23 +58,24 @@ class Module
   
 end #class module
 
+
 module RationalizeClassMethods
   
-  
-  def new(*args)
-    obj = old_new(*args) 
-    id =  obj.instance_variable_get(key_attribute)
-    raise "please set #{key} in initialize" unless id
-    result = @_lookup_store[id] 
-    if result
-      return result
-      raise "#{key}:#{id} already exists"
-    else
-      result = obj
-      @_lookup_store[id] = result
-    end
-    result
-  end
+  # create a new object. if the id has been set
+  #  def new(*args)
+  #    obj = old_new(*args) 
+  #    id =  obj.instance_variable_get(key_attribute)
+  #    
+  #    result = @_lookup_store[id] 
+  #    if result
+  #      return result
+  #      raise "#{key}:#{id} already exists"
+  #    else
+  #      result = obj
+  #      @_lookup_store[id] = result
+  #    end
+  #    result
+  #  end
   
   def [](id)
     if obj = @_lookup_store[id]
@@ -92,27 +93,34 @@ module RationalizeClassMethods
   end
   
   
+  # ensure that there is only one version of this object. if there is an id
+  # and the id exists in memory then copy the attributes from this object
+  # into the object that exists in memory.
   def blix_rationalize(o)
     id = o.instance_variable_get(key_attribute)
+    return o unless id
     if olditem = self.[](id)
       o.instance_variables.each do |var|
-        olditem.instance_variable_set(var.to_sym, o.instance_variable_get(var.to_sym))
+        olditem.instance_variable_set(var.to_sym, (o.instance_variable_get(var.to_sym)))
       end
       olditem
     else
      (@_lookup_store[id]=o)
-    end   
-  end    
+    end
+  end
   
+  
+  
+  # delete an object from the in memory object list
   def blix_unrationalize(o)
     id = o.instance_variable_get(key_attribute)
-    @_lookup_store.delete(id)
+    @_lookup_store.delete(id) if id
   end
   
   # look on the server for the value
   def db_find(id)
     return unless id
-    classname = GetXML.dasherize self.name
+    classname = Blix.dasherize self.name
     puts "finding /#{key}=>#{id}(#{id.class.name})/ for #{classname} ( list=/#{self.list.inspect}/)" if $DEBUG
     val = Blix::Client::Connection.instance.request( "#{classname}_get", {key=>id} ) rescue nil
     val.blix_rationalize
@@ -142,9 +150,9 @@ module RationalizeClassMethods
     subcls.instance_variable_set(:@_lookup_store,{})
   end  
   
-  def raw_new(*args)
-    o=old_new(*args)
-  end
+  #  def raw_new(*args)
+  #    o=old_new(*args)
+  #  end
 end
 
 module RationalizeMethods 
