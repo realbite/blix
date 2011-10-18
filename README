@@ -29,6 +29,7 @@ class MyHandler < Blix::Server::Handler
 end
 
 Blix::ServerMethod.new(:foo,:value,:size)       # register the method and parameter names here
+Blix::ServerMethod.new(:area_get,:id)
 
 require 'blix'
 parser = Blix::JsonRpcParser.new
@@ -52,7 +53,7 @@ parser.valid_klass[:area] = [Client::Area]
 
 client    = Blix::Client::AmqpConnection.create(parser,:host=>"myhost")
 
-client.area_all
+area = client.area_get(123)
 
 client.add_observer(self)
 
@@ -82,6 +83,16 @@ out of sync with the server and we will have to reload everything from scratch.
 a single references to an object is  stored in a variable ending in _id
 an list (array) of references to objects is stored in a variable ending in ids.
 the first part of the variable names above is the class name of the referred to variable.
+
+For a system where there are not to many updates of the objects compared to the reads on the objects 
+and the memory requirements are not too large then this should 
+ a) speed up access to objects once cached.
+ b) minimise network traffic
+ c) ensure that objects are always referring to the latest version of an object.
+ 
+Limitations are 
+  a) memory
+  b) client must not miss any notifications
 
 2.Implementation
 ----------------

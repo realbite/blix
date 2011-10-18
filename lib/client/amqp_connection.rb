@@ -67,8 +67,9 @@ module Blix
         @listener      =  "client.#{::Kernel.rand(999_999_999_999)}"
         Thread.new(self) do 
           AMQP.start(:host => @host) do
-            notify   = MQ.fanout(@x_notify)
-            MQ.queue(@listener, :auto_delete => true).bind(notify).subscribe{ |msg| yield msg }
+            _notify   = MQ.fanout(@x_notify)
+            puts "[amqp_listen] starting listener on #{Thread.current}" if $DEBUG
+            MQ.queue(@listener, :auto_delete => true).bind(_notify).subscribe{ |msg| yield msg }
           end   
         end
       end

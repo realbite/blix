@@ -79,7 +79,7 @@ module Blix
         message.signal = signal
         message.value  = value
         data = parser.format_notification(message)
-        puts "server notifying [#{signal}] - #{value}"
+        puts "#{Time.now}  notification  [ #{signal} ] #{value.class}:#{value.id if value.respond_to?(:id)}" if @info
         send_notification(data)
       end
       
