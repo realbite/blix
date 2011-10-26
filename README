@@ -108,7 +108,7 @@ end
 whenever we receive an object from the server and we have to integrate it with our memory table
 then perform the following
 
-if obj.respond_to? blix_rationalize
+if obj.respond_to? :blix_rationalize
    new_obj = obj.blix_rationalize
 else
    new_obj = obj

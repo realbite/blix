@@ -14,6 +14,8 @@ module Blix
       
       private_class_method :new
       
+      @@_instance = nil  # share instance with subclasses
+      
       #-------------------------------------------------------------------------------
       # reimplement the following methods in your subclasses
       #
@@ -37,12 +39,12 @@ module Blix
       
       #-------------------------------------------------------------------------------
       def Connection.instance
-        @_instance
+        @@_instance
       end
       
       def Connection.create(parser,opts={})
-        raise "Connection already created !!!" if @_instance
-        @_instance = new(parser,opts)
+        raise "Connection already created !!!" if @@_instance
+        @@_instance = new(parser,opts)
       end
       
       def initialize(parser,opts)
@@ -70,11 +72,11 @@ module Blix
       
       # send a request with named parameters in hash format
       def request(method,hash={})
-        request            = RequestMessage.new
-        request.method     = method.to_s
-        request.parameters = hash
-        request.id         = 123 # not important here - could generate a random number.
-        request_message(request)
+        r            = RequestMessage.new
+        r.method     = method.to_s
+        r.parameters = hash
+        r.id         = 123 # not important here - could generate a random number.
+        request_message(r)
       end
       
       # try to pass missing methods on as a request if possible
@@ -85,6 +87,17 @@ module Blix
         rescue ArgumentError
           super
         end
+      end
+      
+      # forward a mehod call on the given object to the server
+      def proxy_method(obj,method,*args)
+        class_name  = Blix.dasherize(obj.class.name)
+        method_name = "#{class_name}_#{method}"
+        args.unshift(obj.id)
+        hash = Blix::ServerMethod.as_hash(method_name, *args)
+        
+        puts "proxy method=>#{method_name}/#{args.inspect}/#{hash.inspect}" if $DEBUG
+        request(method_name,hash)
       end
       
       

@@ -28,6 +28,7 @@ class Module
   def make_json(*args)
     @_xml_readers = args
     include MakeJsonMethods
+    extend  MakeJsonClassMethods
   end
   
   def blix_readers
@@ -220,6 +221,10 @@ class Hash
         values_to_json(*a)
       end
     end
+    
+  end
+  
+  module MakeJsonClassMethods
     
     def self.json_create(values)
       obj = new

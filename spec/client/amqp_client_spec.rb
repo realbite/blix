@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'blix/json_rpc_parser'
 
 module Blix::Client
   
@@ -7,12 +8,19 @@ module Blix::Client
     describe "create the client" do
       it "should start running with default handler" do
         lambda{
-            parser = Blix::JsonRpcParser.new
-            AmqpConnection.create(parser,:host=>$EXCHANGE_HOST)
+          parser = Blix::JsonRpcParser.new
+          AmqpConnection.create(parser,:host=>$EXCHANGE_HOST)
         }.should_not raise_error
       end
     end
-
+    
+    it "should share the instance between the connection and its superclass" do
+      parser = Blix::JsonRpcParser.new
+      connection = AmqpConnection.create(parser,:host=>$EXCHANGE_HOST)
+      AmqpConnection.instance.should == Connection.instance
+      AmqpConnection.instance.should == connection
+      Connection.instance.should == connection
+    end
     
   end
   

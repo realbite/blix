@@ -72,74 +72,7 @@ module Blix
       end
       
             
-      # decode the message and either perform standard processing or pass on
-      # to custom handlers if available.
-#      def call(data)
-#        
-#        # see if the method can be understood.
-#        begin
-#          @request = parse_request(data)
-#        rescue Exception=>e
-#          dump
-#          e             = ErrorMessage.new
-#          e.id          = nil
-#          e.code        = 100
-#          e.description = "invalid request formatting"
-#          e.method      = "not defined"
-#          return  format_error(e)
-#        end
-#        
-#        response = Message::Response.new
-#        
-#        # handle message with custom handler if available
-#        if @service && @service.respond_to?( @request.method_name.to_sym )
-#          begin
-#            # convert the parameters to arguments
-#            args = ServerMethod.as_args @request.method_name, @request.parameters
-#            response.data = @service.send @request.method_name.to_sym, *args
-#          rescue Exception=>e
-#            dump
-#            response = Message::Error.new
-#            response.id = @request.id
-#            response.code = 200
-#            response.description = e.to_s
-#          end
-#          
-#          # otherwise try to handle with standard crud  
-#        elsif @request.crud?
-#          begin
-#            response.data = @request.crud_execute
-#          rescue Exception=>e
-#            dump
-#            response = Message::Error.new
-#            response.id = @request.id
-#            response.code = 400
-#            response.description = e.to_s
-#          end
-#          # otherwise we cannot handle this message  
-#        elsif @request.method_name == "echo"
-#          v = @request.parameters[:item]
-#          puts "[echo] #{v}(#{v.class})"
-#          response.data = v
-#          #puts "... #{response.to_message}"
-#        else
-#          response = Message::Error.new
-#          response.id = @request.id
-#          response.code = 400
-#          response.description = "invalid method call:#{@request.method_name}" 
-#        end
-#        response.method = @request.method_name
-#        response.id     = @request.id
-#        response
-#      end
-#      
-#      
-#      
-#      if value.kind_of? Hash
-#        @handler.notify(signal,value)
-#      else
-#        @handler.notify(signal,{:item=>value})
-#      end
+      
       
     end #Parser
 

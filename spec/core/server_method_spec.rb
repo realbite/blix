@@ -40,6 +40,15 @@ module Blix
       ServerMethod.as_args(:foo_1,{:one=>77}).should == [77]
       ServerMethod.as_args(:foo_3,{:one=>77,:two=>44, :three=>"hello"}).should == [77,44,"hello"]
       ServerMethod.as_args(:foo_3,{:three=>"hello",:one=>77,:two=>44}).should == [77,44,"hello"]
+      ServerMethod.as_args(:foo_3,{:three=>"hello",:one=>77,:two=>nil}).should == [77,nil,"hello"]
+      ServerMethod.as_args(:foo_3,{:three=>nil,:one=>77,:two=>nil}).should == [77,nil,nil]
+    end
+    
+    it "should convert arguments to hashes" do
+      ServerMethod.new(:foo_0)
+      ServerMethod.new(:foo_1, :one)
+      ServerMethod.new(:foo_3, :one, :two, :three)
+      ServerMethod.as_hash(:foo_3,nil,nil,nil).should == {:one=>nil, :two=>nil, :three=>nil}
     end
     
     it "should raise error if too few arguments" do

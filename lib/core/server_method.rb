@@ -103,7 +103,7 @@ module Blix
       parameters = find(name)
       args = []
       parameters.each_with_index do |id,i|
-        args[i] = hash[id] if  hash[id]
+        args[i] = hash[id] if  hash.include? id
       end
       args
     end
