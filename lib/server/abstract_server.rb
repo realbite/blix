@@ -33,8 +33,8 @@ module Blix
         raise "server already created" if @@instance
         @@instance = new(parser,handler, opts)
       end
-
-
+      
+      
       # start a new server instance
       def self.start
         raise "please create server first" unless @@instance
@@ -60,6 +60,8 @@ module Blix
         @handler.set_server(self)
         @handler.set_parser(@parser)
         @info    = opts[:info]
+        @logger_info  = opts[:info_logger] ||opts[:logger]
+        @logger_error = opts[:error_logger] || opts[:logger]
         setup(opts)
       end
       
@@ -80,6 +82,7 @@ module Blix
         message.value  = value
         data = parser.format_notification(message)
         puts "#{Time.now}  notification  [ #{signal} ] #{value.class}:#{value.id if value.respond_to?(:id)}" if @info
+        log_info "notification  [ #{signal} ] #{value.class}:#{value.id if value.respond_to?(:id)}" 
         send_notification(data)
       end
       
@@ -126,6 +129,7 @@ module Blix
           
           time_diff = Time.now - start_time
           puts "#{Time.now}  #{"%6.3f" % (time_diff*1000)} ms  [ #{request.method} ]" if @info
+          log_info "#{"%6.3f" % (time_diff*1000)} ms  [ #{request.method} ]"
           parser.format_response(response)
         else
           error             = ResponseMessage.new
@@ -140,14 +144,30 @@ module Blix
       
       # dump information to stdout as an  aid to debugging.
       def dump(data=nil)
-        puts "#{Time.now} --------------------------------------------"
-        puts $!
-        puts $@
-        puts "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        puts data || "no data available"
-        puts "--------------------------------------------------------"
+          str =  "#{Time.now} --------------------------------------------\n"
+          str << $!.to_s
+          str << "\n"
+          str << $@.to_s
+          str << "\n"
+          str << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+          str << data || "no data available"
+          str << "\n"
+          str << "--------------------------------------------------------"
+        puts str if @info
+        log_error str
       end
       
+      def log_info(str)
+        if @logger_info
+          @logger_info.info str
+        end
+      end
+      
+      def log_error(str)
+        if @logger_error
+          @logger_error.error str
+        end
+      end
     end
   end
 end
