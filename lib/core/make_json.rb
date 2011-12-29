@@ -70,7 +70,7 @@ end
 
 class Time
   def to_json(*a)
-    {"datetime"=>self.xmlschema}.to_json(*a)
+    {"datetime"=>self.utc.xmlschema}.to_json(*a)
   end
 end
 

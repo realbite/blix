@@ -35,13 +35,24 @@ module Blix
   end
   
   class ValidKlass
-    attr_reader :name, :klass, :methods
+    attr_reader :name, :klass, :methods, :factory
     
-    def initialize(name,klass,*methods)
-      @name = name.to_sym
+    def name=(val)
+      @name = val.to_sym
+    end
+    
+    def initialize(name,klass,*methods,&factory)
+      @name = name.to_sym                      # the name in the protocol
       @klass = klass
+      @factory = factory                          # generate a new object.
       @methods = methods.map{|i| i.to_sym}
     end
+    
+    def methods?
+      @methods && (@methods.length > 0)
+    end
+    
+    
   end
   
 end

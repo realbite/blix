@@ -55,7 +55,69 @@ module Blix
         @x_request  = opts[:request]  || (@_prefix + '.requests')
         @x_notify   = opts[:notify]   || (@_prefix + '.notify')
         @server_q   = "server.#{@_prefix}.requests"
+        @notify_queue = Queue.new
       end
+      
+      # enter a loop just listening for requests and passing them on to the
+      # handler and returning the response if there is one.
+      def listen2
+        
+        EM.run do
+          AMQP.connect(:host => @host) do |connection |
+            puts "Connected to AMQP broker. Running #{AMQP::VERSION} version of the gem..."
+            channel  = AMQP::Channel.new(connection)
+            exchange = channel.direct(@x_request)
+            reply    = channel.direct(@x_response)
+            queue    = channel.queue(@server_q)
+            notify   = channel.fanout(@x_notify)
+            
+            puts "request xchange =#{@x_request}"
+            puts "reply   xchange =#{@x_response}"
+            puts "server  queue   =#{@server_q}"
+            
+            # listen for rpc requests on the server queue
+            #
+            queue.bind( exchange).subscribe do |header,body|
+              
+              # extract the headers and create a transport for this
+              # client. the reply_to field may be in the application
+              # headers field so check for it there also.
+              
+              reply_to   = header.reply_to   || ( header.headers && header.headers[:reply_to])
+              message_id = header.message_id || ( header.headers && header.headers[:message_id])
+              
+              if reply_to && message_id
+                # process the call
+                response              = do_handle(body)
+                
+                # publish the reply only if there is a response
+                
+                if response
+                  options = {}
+                  options[:key]        = reply_to
+                  options[:message_id] = message_id
+                  data                 = Blix.to_binary_data(response)
+                  
+                  puts "[AmqpServer] response: data=#{data}, options=#{options}" if $DEBUG
+                  
+                  reply.publish(data, options )
+                end
+              else
+                puts "missing reply-to /message_id  field ....."
+                pp header
+              end
+            end #subscribe
+            
+            # send any notifications that are waiting.
+            while !@notify_queue.empty?
+              message = @notify_queue.pop
+              channel.fanout(@x_notify).publish(Blix.to_binary_data(message))
+              puts "[AmqpServer] notify: message=#{msg}" if $DEBUG
+            end
+          end #connection
+        end # EM
+        
+      end 
       
       # enter a loop just listening for requests and passing them on to the
       # handler and returning the response if there is one.
@@ -69,6 +131,11 @@ module Blix
           puts "request xchange =#{@x_request}"
           puts "reply   xchange =#{@x_response}"
           puts "server  queue   =#{@server_q}"
+          
+          @do_notify = proc do |msg|
+            notify.publish(Blix.to_binary_data(msg))
+            puts "[AmqpServer] notify: message=#{msg}" if $DEBUG
+          end
           
           queue.bind( exchange).subscribe do |header,body|
             
@@ -96,21 +163,33 @@ module Blix
                 reply.publish(data, options )
               end
             else
-              puts "missing reply-to /message_id  field ....."
-              pp header
+              puts "missing reply-to /message_id  field .....#{header.inspect}"
             end
           end
+          
+#          # send any notifications that are waiting.
+#          while !@notify_queue.empty?
+#            message = @notify_queue.pop
+#            channel.fanout(@x_notify).publish(Blix.to_binary_data(message))
+#            puts "[AmqpServer] notify: message=#{msg}" if $DEBUG
+#          end
         end
         
       end 
       
       # send a raw message to the notification exchange
       def send_notification(msg)
+        EM.next_tick do
+          @do_notify.call(msg)
+        end
+      end
+      
+      # send a raw message to the notification exchange
+      def send_notification2(msg)
         raise "please start server first before notify !!" unless @x_notify
         puts "[AmqpServer] notify: message=#{msg}" if $DEBUG
         MQ.fanout(@x_notify).publish(Blix.to_binary_data(msg))
       end
-      
     end #AmqpServer
   end
 end #Blix

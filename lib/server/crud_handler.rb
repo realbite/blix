@@ -43,7 +43,7 @@ module Blix::Server
       is_crud    = is_crud && klass_info
       if is_crud
         
-        klass = klass_info[0]
+        klass = klass_info.klass
         case action
           when :all
           #raise ParseException, klass_info.join(',') unless klass_info.index(:all)
