@@ -15,8 +15,8 @@ module Blix
         @x_notify   = opts[:notify]   || (@_prefix + '.notify')
         
         @interface   = Bunny.new(:host=>@host,:logging => false)
-        puts self.inspect
-        puts @interface.inspect
+        #puts self.inspect
+        #puts @interface.inspect
         @interface.start
         @out_exch    = @interface.exchange(@x_request) # outgoing exchange for publishing request
         @in_exch     = @interface.exchange(@x_response) 

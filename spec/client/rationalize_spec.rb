@@ -67,6 +67,27 @@ module Blix
       obj.object_id.should == f.object_id
     end
     
+    it "should accept ids in string form" do
+      f = Foo.new
+      f.name = "aaa"
+      f.alias = "bbb"
+      f.id = "123"
+      f.blix_rationalize
+      
+      g = Foo.new
+      g.name = "cccc"
+      g.alias = "dddd"
+      g.id = "123"
+      
+      obj = g.blix_rationalize
+      Foo.length.should == 1
+      h = Foo.find("123")
+      h.object_id.should == f.object_id
+      h.name.should == "cccc"
+      h.alias.should == "dddd"
+      obj.object_id.should == f.object_id
+    end
+    
     it "should not do anything for a normal object" do
       f = Bar.new
       f.name = "aaa"
