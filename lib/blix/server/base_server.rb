@@ -2,7 +2,7 @@
 
 module Blix
   module Server
-    class AbstractServer
+    class BaseServer
       private_class_method :new
       
       @@instance = nil # share the instance amoung subclasses
@@ -14,10 +14,16 @@ module Blix
         raise  "please reimplement setup(opts) method in your subclass"
       end
       
+      # shutdown the server cleanly
+      #
+      def closedown
+        
+      end
+      
       # listen for rpc calls and service them. reimplement this function to
-      # provide your functionality and call do_handle(message) to
+      # provide your functionality and yield your message to the passed block to
       # process the call
-      def listen
+      def listen(&block)
         raise  "please reimplement listen() method in your subclass"
       end
       
@@ -38,7 +44,7 @@ module Blix
       # start a new server instance
       def self.start
         raise "please create server first" unless @@instance
-        @@instance.listen
+        @@instance.listen{|msg| @@instance.do_handle(msg)}
       end
       
       def self.instance
@@ -63,6 +69,9 @@ module Blix
         @logger_info  = opts[:info_logger] ||opts[:logger]
         @logger_error = opts[:error_logger] || opts[:logger]
         setup(opts)
+        trap("KILL"){closedown}
+        trap("TERM"){closedown}
+        trap("INT"){closedown}
       end
       
       def parser
@@ -144,15 +153,15 @@ module Blix
       
       # dump information to stdout as an  aid to debugging.
       def dump(data=nil)
-          str =  "#{Time.now} --------------------------------------------\n"
-          str << $!.to_s
-          str << "\n"
-          str << $@.to_s
-          str << "\n"
-          str << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-          str << data || "no data available"
-          str << "\n"
-          str << "--------------------------------------------------------"
+        str =  "#{Time.now} --------------------------------------------\n"
+        str << "#{$!}"
+        str << "\n"
+        str << "#{$@}"
+        str << "\n"
+        str << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+        str << data || "no data available"
+        str << "\n"
+        str << "--------------------------------------------------------"
         puts str if @info
         log_error str
       end

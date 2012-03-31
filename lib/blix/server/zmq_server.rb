@@ -1,6 +1,4 @@
-require 'core/signals'
-require 'thread'
-
+require 'zmq'
 #####################################################################################################
 # this module is to allow REST like calls to be made via the amqp protocol on resources.
 #
@@ -35,7 +33,7 @@ require 'thread'
 
 module Blix
   module Server
-    class DummyServer < AbstractServer
+    class ZmqServer < BaseServer
       
       # create a server passing the handler object and a hash of options.
       # the handler object gets its 'process'method called with the message
@@ -43,41 +41,41 @@ module Blix
       #
       #  handler, object with 'process' method to process requests
       #
-      #  :host     => 'localhost', the host of the AMQP broker
-      #  :response => 'responses', the response exchange name
-      #  :request  => 'requests'   the request exchange name
-      #  :notify   => 'notify'     the notifications exchange name
-      
-      
+
       def setup(opts)
-        puts "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-        $BLIX_REQUEST    ||= Queue.new
-        $BLIX_NOTIFY     ||= Queue.new
-        $BLIX_RESPONSE   ||= Queue.new
-        $BLIX_REQUEST.clear
-        $BLIX_NOTIFY.clear
-        $BLIX_RESPONSE.clear
+        @zmq = ZMQ::Context.new(1)
+        @responder = @zmq.socket(ZMQ::REP)
+        @responder.bind("tcp://*:7301")
+        @notifier  = @zmq.socket(ZMQ::PUB)
+        @notifier.bind("tcp://*:7302")
+        @_run = true
+      end
+      
+      def closedown
+        @responder.setsockopt(ZMQ::LINGER,0)
+        @notifier.setsockopt(ZMQ::LINGER,0)
+        @responder.close
+        @notifier.close
+        @zmq.close
+        exit
       end
       
       # enter a loop just listening for requests and passing them on to the
       # handler and returning the response if there is one.
-      def listen
-        while true
-          data        = $BLIX_REQUEST.pop
-          response    = do_handle(body)
-          if response
-            puts "[DummyServer] response: data=#{data}, options=#{options}" if $DEBUG
-            $BLIX_RESPONSE.push(data)
+      def listen(&block)
+        while @_run do
+          request   = @responder.recv #(ZMQ::NOBLOCK)
+          if request
+            response  = block && block.call(request)
+            @responder.send( response )
           end
         end
-     end 
-      
-      # send a raw message to the notification exchange
-      def send_notification(msg)
-        $BLIX_NOTIFY.push(msg)
-        puts "[DummyServer] notify: message=#{msg}" if $DEBUG
       end
       
-    end #DummyServer
+      def send_notification(msg)
+        @notifier.send(msg)
+      end
+      
+    end #ZmqServer
   end
 end #Blix

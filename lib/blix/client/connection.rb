@@ -5,7 +5,8 @@ module Blix
   module Client
     
     class ServerError < StandardError; end  # an error ocurred on the server
-    
+    class TimeoutError < StandardError; end
+      
     # Connection allows rpc calls to be made to a server and also listens
     # for notifications from the server and passes these on to any observers
     # of this class.
@@ -37,6 +38,14 @@ module Blix
         raise  "please reimplement send_request(data) method in your subclass"
       end
       
+      def shutdown
+        
+      end
+      
+      def close
+        Connection.close
+      end
+      
       #-------------------------------------------------------------------------------
       def Connection.instance
         @@_instance
@@ -51,6 +60,12 @@ module Blix
         @parser    = parser
         setup(opts)
         listen
+      end
+      
+      def Connection.close
+        raise "no connection" unless @@_instance
+        @@_instance.shutdown
+        @@_instance=nil 
       end
       
       # the parser handles conversion between the raw data and the request/response

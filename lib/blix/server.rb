@@ -1,0 +1,8 @@
+require 'logger'
+require 'blix'
+require 'blix/server/base_server'
+require 'blix/server/dummy_server'
+require 'blix/server/handler'
+require 'blix/server/crud_handler'
+require 'blix/server/echo_handler'
+require 'blix/server/notify_handler'

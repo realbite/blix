@@ -22,6 +22,13 @@ module Blix::Client
       Connection.instance.should == connection
     end
     
+    it "should timeout" do
+      t = Time.now
+      lambda{AmqpConnection.instance.send_request("request here")}.should raise_error TimeoutError
+      diff = Time.now - t
+      diff.should > 10
+    end
+    
   end
   
 end

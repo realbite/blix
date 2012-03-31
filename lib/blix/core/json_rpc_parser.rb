@@ -1,5 +1,6 @@
 require 'crack'
 require 'json'
+require 'core/make_json'
 
 module Blix
   
@@ -165,7 +166,7 @@ module Blix
             end
           end
           # rationalize this value if neccessary
-          myclass = myclass.blix_rationalize if myclass.respond_to? :blix_rationalize
+          #myclass = myclass.blix_rationalize if myclass.respond_to? :blix_rationalize
           myclass
         elsif  values.kind_of? NilClass
           nil

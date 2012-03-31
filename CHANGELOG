@@ -1,0 +1,8 @@
+0.2.9   30/03/2012
+   - C.Andrews restructure directories
+   - separate require 'blix' into 'blix/client' and 'blix/server'
+   - add crypt zmq 
+
+* 0.2.8 26/03/2012  
+   - C. Andrews : add support for 0MQ
+     add Connection.close method

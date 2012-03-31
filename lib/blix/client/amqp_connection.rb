@@ -13,6 +13,7 @@ module Blix
         @x_response = opts[:response] || (@_prefix + '.responses')
         @x_request  = opts[:request]  || (@_prefix + '.requests')
         @x_notify   = opts[:notify]   || (@_prefix + '.notify')
+        @timeout    = opts[:timeout]  || 10
         
         @interface   = Bunny.new(:host=>@host,:logging => false)
         #puts self.inspect
@@ -23,42 +24,70 @@ module Blix
         @reply_to    = "client.tmp.#{::Kernel.rand(999_999_999_999)}" #FIXME
         @in_queue    = @interface.queue(@reply_to, :auto_delete=>true, :exclusive=>true)
         @in_queue.bind(@in_exch, :key => @reply_to) # queue to read reply from    
-        @_outgoing = ''
-        @_incoming = ''
+        @_outgoing     = ''
+        @_incoming     = ''
+        @response_hash = {}
       end
       
       # perform a RPC request
       #
       def send_request(data)
+
+        outgoing = Blix.to_binary_data(data)
+        incoming = nil
+        id      = "#{Time.now.to_i}#{rand(9999)}"
+        options = {}
+        options[:key]          = ""
+        options[:reply_to]     = @reply_to
+        options[:content_type] = "text/xml"
+        options[:message_id]   = id
         
         if $DEBUG
-          puts "[request]data--------------"
+          puts "[request:#{id}]data--------------"
           puts data
           puts "--------------------------" 
         end
         
-        outgoing = Blix.to_binary_data(data)
-        options = {}
+        @out_exch.publish(data, options )
+        @response_hash[id] = nil
+        timeout = Time.now
         
-        options[:key]          = ""
-        options[:reply_to]     = @reply_to
-        options[:content_type] = "text/xml"
-        options[:message_id]   = "#{@time.to_i}#{rand(9999)}"
-        @out_exch.publish(outgoing, options )
-        
-        incoming = nil
         while (!incoming)
-          msg = @in_queue.pop
+          
+          if @response_hash[id]
+            incoming = @response_hash[id]
+            @response_hash.delete id
+            break
+          end
+          
+          msg     = @in_queue.pop
+          header  = msg[:header]
           payload = msg[:payload]
-          incoming = payload unless payload == :queue_empty
+          
+          unless payload == :queue_empty
+            message_id = header.message_id
+            if message_id == id
+              incoming = payload
+              @response_hash.delete id
+              break
+            else
+              @response_hash[message_id] = payload if @response_hash.has_key?(message_id)
+            end
+          end
+          raise TimeoutError if (Time.now - timeout) > @timeout
+          do_sleep
         end
         #        
         if $DEBUG
-          puts "[request]response data-----"
+          puts "[request:#{id}]response data-----"
           puts incoming
           puts "--------------------------" 
         end
         incoming
+      end
+      
+      def do_sleep
+        sleep 0.01
       end
       
       

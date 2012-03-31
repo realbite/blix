@@ -1,5 +1,4 @@
 require 'amqp'
-require 'core/signals'
 #####################################################################################################
 # this module is to allow REST like calls to be made via the amqp protocol on resources.
 #
@@ -34,7 +33,7 @@ require 'core/signals'
 
 module Blix
   module Server
-    class AmqpServer < AbstractServer
+    class AmqpServer < BaseServer
       
       # create a server passing the handler object and a hash of options.
       # the handler object gets its 'process'method called with the message
@@ -121,7 +120,7 @@ module Blix
       
       # enter a loop just listening for requests and passing them on to the
       # handler and returning the response if there is one.
-      def listen
+      def listen(&block)
         AMQP.start(:host => @host) do
           exchange = MQ.direct(@x_request)
           reply    = MQ.direct(@x_response)
@@ -148,7 +147,7 @@ module Blix
             
             if reply_to && message_id
               # process the call
-              response              = do_handle(body)
+              response              = block && block.call(body)
               
               # publish the reply only if there is a response
               
